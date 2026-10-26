@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Mobile Executor</title>
+    <style>
+@media screen and (orientation: portrait) {
+    body {
+        transform: rotate(90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        position: absolute;
+        top: 0;
+        left: 100%;
+        overflow-x: hidden;
+    }
+}
+
+        :root {
+            --bg-color: #0d0f18;
+            --panel-bg: #16192b;
+            --border-color: #2a2f4c;
+            --accent-color: #7928ca;
+            --accent-glow: rgba(121, 40, 202, 0.4);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --title-color: #c084fc;
+            --success-color: #10b981;
+            --console-text: #34d399;
+        }
+
+        [data-theme="hacker"] {
+            --bg-color: #050b05;
+            --panel-bg: #0a150a;
+            --border-color: #1a3a1a;
+            --accent-color: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.4);
+            --text-color: #e0ffe0;
+            --text-muted: #4b7a4b;
+            --title-color: #10b981;
+            --console-text: #10b981;
+        }
+
+        [data-theme="crimson"] {
+            --bg-color: #12080a;
+            --panel-bg: #1f0d11;
+            --border-color: #421820;
+            --accent-color: #e11d48;
+            --accent-glow: rgba(225, 29, 72, 0.4);
+            --text-color: #ffe4e6;
+            --text-muted: #9f1239;
+            --title-color: #fb7185;
+            --console-text: #f87171;
+        }
+
+        [data-theme="oled"] {
+            --bg-color: #000000;
+            --panel-bg: #0d0d0d;
+            --border-color: #222222;
+            --accent-color: #ffffff;
+            --accent-glow: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --text-muted: #666666;
+            --title-color: #ffffff;
+            --console-text: #00ffcc;
+        }
+
+        [data-theme="cyan"] {
+            --bg-color: #06131e;
+            --panel-bg: #0b1e2d;
+            --border-color: #1b3a54;
+            --accent-color: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.4);
+            --text-color: #ecfeff;
+            --text-muted: #155e75;
+            --title-color: #22d3ee;
+            --console-text: #22d3ee;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .floating-bubble-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--accent-color), #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px var(--accent-glow);
+            z-index: 9999;
+            transition: transform 0.2s;
+        }
+
+        .floating-bubble-btn:active {
+            transform: scale(0.9);
+        }
+
+        .executor-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .minimized {
+            display: none !important;
+        }
+
+        .card-header {
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .title {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--title-color);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .theme-select {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .theme-select option {
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+        }
+
+        .editor-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            color: var(--text-color);
+            border: none;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
+            line-height: 1.5;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .floating-top-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .floating-top-btn:active {
+            transform: scale(0.92);
+        }
+
+        .action-bar {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-run {
+            background-color: var(--success-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-roblox {
+            background: linear-gradient(135deg, #0070f3, #00c6ff);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+        }
+
+        .btn-clear {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .console-section {
+            border-top: 1px solid var(--border-color);
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .console-header {
+            padding: 6px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .console-box {
+            height: 90px;
+            padding: 10px 16px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-y: auto;
+            color: var(--console-text);
+            white-space: pre-wrap;
+        }
+
+        /* Modal คลังสคริปต์ (Script Library Modal) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+            font-weight: 600;
+            color: var(--title-color);
+        }
+
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .script-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .script-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .script-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .script-snippet {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: monospace;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="floating-bubble-btn" onclick="toggleExecutorWindow()" title="เปิด/ปิดหน้าต่าง Executor">
+        ⚡
+    </button>
+
+    <!-- Modal คลังสคริปต์ -->
+    <div id="libraryModal" class="modal-overlay minimized">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📁 คลังเก็บสคริปต์ (Script Library)</span>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="closeLibrary()">✕ ปิด</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="newScriptName" placeholder="ตั้งชื่อสคริปต์ของคุณ..." style="flex:1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; color: var(--text-color); font-size: 13px; outline: none;">
+                    <button class="btn btn-run" onclick="saveCurrentScript()">💾 บันทึกปัจจุบัน</button>
+                </div>
+
+                <div class="section-title">สคริปต์พรีเซ็ตแนะนำ (Presets)</div>
+                <div class="script-item">
+                    <div class="script-info">
+                        <div class="script-name">🟢 Roblox UI Notification</div>
+                        <div class="script-snippet">local ScreenGui = Instance.new("ScreenGui")...</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadPreset('ui')">โหลด</button>
+                </div>
+                <div class="script-item">
+                    <div class="script-info">
+                        <div class="script-name">🚀 Infinite Yield (Hub)</div>
+                        <div class="script-snippet">loadstring(game:HttpGet('https...'))()</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadPreset('iy')">โหลด</button>
+                </div>
+
+                <div class="section-title">สคริปต์ที่บันทึกไว้ (Saved Scripts)</div>
+                <div id="savedScriptsList" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- แสดงรายการสคริปต์ที่บันทึกไว้ตรงนี้ -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="executor-card" id="executorCard">
+        <div class="card-header">
+            <div class="title">
+                <span>⚡</span> Mobile Executor
+            </div>
+            <div class="header-controls">
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openLibrary()">📁 คลังสคริปต์</button>
+                <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+                    <option value="default">💜 Cyberpunk</option>
+                    <option value="hacker">💚 Matrix Green</option>
+                    <option value="crimson">🔴 Crimson Dark</option>
+                    <option value="oled">🖤 OLED Pure Black</option>
+                    <option value="cyan">💙 Neon Cyan</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="editor-wrapper">
+            <button class="floating-top-btn" onclick="quickAction()" title="Quick Execute">
+                🚀
+            </button>
+            <textarea id="scriptInput" placeholder="// วางสคริปต์ของคุณที่นี่... (ระบบบันทึกให้อัตโนมัติ)"></textarea>
+        </div>
+
+        <div class="action-bar">
+            <div class="button-group">
+                <button class="btn btn-run" onclick="runScript()">▶ รัน</button>
+                <button class="btn btn-roblox" onclick="openRoblox()">🎮 เปิด Roblox</button>
+                <button class="btn btn-clear" onclick="clearConsole()">🗑 ลบ</button>
+                <button class="btn btn-secondary" onclick="pasteCode()">📋 วาง</button>
+            </div>
+        </div>
+
+        <div class="console-section">
+            <div class="console-header">
+                <span>CONSOLE OUTPUT</span>
+                <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 10px;" onclick="copyConsole()">คัดลอก</button>
+            </div>
+            <div class="console-box" id="consoleOutput">
+                > คอนโซลพร้อมใช้งาน...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedScript = localStorage.getItem('saved_executor_script');
+            if (savedScript) {
+                document.getElementById('scriptInput').value = savedScript;
+                log("โหลดสคริปต์ล่าสุดสำเร็จ");
+            }
+
+            const savedTheme = localStorage.getItem('saved_executor_theme');
+            if (savedTheme) {
+                document.getElementById('themeSelect').value = savedTheme;
+                changeTheme(savedTheme, false);
+            }
+
+            renderLibraryList();
+        });
+
+        function toggleExecutorWindow() {
+            const card = document.getElementById('executorCard');
+            card.classList.toggle('minimized');
+        }
+
+        // เปิด-ปิด คลังสคริปต์
+        function openLibrary() {
+            document.getElementById('libraryModal').classList.remove('minimized');
+            renderLibraryList();
+        }
+
+        function closeLibrary() {
+            document.getElementById('libraryModal').classList.add('minimized');
+        }
+
+        // ระบบบันทึกสคริปต์ลงคลัง
+        function saveCurrentScript() {
+            const nameInput = document.getElementById('newScriptName');
+            const name = nameInput.value.trim() || `สคริปต์วันที่ ${new Date().toLocaleDateString()}`;
+            const code = document.getElementById('scriptInput').value;
+
+            if(!code.trim()) {
+                log("ไม่มีโค้ดให้บันทึก", true);
+                return;
+            }
+
+            let library = JSON.parse(localStorage.getItem('saved_executor_library') || '[]');
+            library.push({ id: Date.now(), name: name, code: code });
+            localStorage.setItem('saved_executor_library', JSON.stringify(library));
+
+            nameInput.value = '';
+            renderLibraryList();
+            log(`บันทึกสคริปต์ "${name}" ลงคลังสำเร็จ!`);
+        }
+
+        // แสดงรายการสคริปต์ในคลัง
+        function renderLibraryList() {
+            const container = document.getElementById('savedScriptsList');
+            let library = JSON.parse(localStorage.getItem('saved_executor_library') || '[]');
+
+            if(library.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px;">ยังไม่มีสคริปต์ที่บันทึกไว้ในคลัง</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            library.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'script-item';
+                div.innerHTML = `
+                    <div class="script-info">
+                        <div class="script-name">${escapeHtml(item.name)}</div>
+                        <div class="script-snippet">${escapeHtml(item.code)}</div>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="loadLibraryScript(${item.id})">โหลด</button>
+                    <button class="btn btn-clear" style="padding: 4px 8px; font-size: 11px;" onclick="deleteLibraryScript(${item.id})">ลบ</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadLibraryScript(id) {
+            let library = JSON.parse(localStorage.getItem('saved_executor_library') || '[]');
+            const script = library.find(item => item.id === id);
+            if(script) {
+                document.getElementById('scriptInput').value = script.code;
+                localStorage.setItem('saved_executor_script', script.code);
+                closeLibrary();
+                log(`โหลดสคริปต์ "${script.name}" สำเร็จ!`);
+            }
+        }
+
+        function deleteLibraryScript(id) {
+            let library = JSON.parse(localStorage.getItem('saved_executor_library') || '[]');
+            library = library.filter(item => item.id !== id);
+            localStorage.setItem('saved_executor_library', JSON.stringify(library));
+            renderLibraryList();
+            log("ลบสคริปต์ออกจากคลังแล้ว");
+        }
+
+        // โหลดสคริปต์พรีเซ็ต
+        function loadPreset(type) {
+            let presetCode = "";
+            if(type === 'ui') {
+                presetCode = `-- ตัวอย่างสคริปต์ Roblox UI\nlocal ScreenGui = Instance.new("ScreenGui")\nlocal TextLabel = Instance.new("TextLabel")\nScreenGui.Parent = game.CoreGui\nTextLabel.Parent = ScreenGui\nTextLabel.Size = UDim2.new(0, 200, 0, 50)\nTextLabel.Text = "Hello from Executor!"`;
+            } else if(type === 'iy') {
+                presetCode = `-- Infinite Yield Admin\nloadstring(game:HttpGet('https://raw.githubuserco
